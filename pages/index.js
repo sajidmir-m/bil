@@ -1,82 +1,80 @@
 import { useState } from "react";
-import { complaintMap } from "../data/complaintMap";
+import { complaintMap } from "../data/complaintMap"; // keywords mapped to complaint type
 
 export default function Home() {
-  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [results, setResults] = useState({});
 
-  const handleSend = () => {
+  const handleSearch = () => {
     const query = input.toLowerCase().trim();
-    if (!query) return;
+    if (!query) {
+      setResults({});
+      return;
+    }
 
-    let lastMatchType = "Others - Miscellaneous";
+    const groupedResults = {};
 
-    // Poore sentence me sequential scan
+    // Loop through all keywords in complaintMap
     for (const keyword in complaintMap) {
-      if (query.includes(keyword)) {
-        lastMatchType = complaintMap[keyword]; // overwrite every time → last match ban jayega
+      if (keyword.includes(query)) { // ✅ partial match allowed
+        const type = complaintMap[keyword];
+        if (!groupedResults[type]) {
+          groupedResults[type] = [];
+        }
+        groupedResults[type].push(keyword);
       }
     }
 
-    const newMessages = [
-      ...messages,
-      { sender: "user", text: input },
-      { sender: "bot", text: lastMatchType }
-    ];
+    // If nothing matches
+    if (Object.keys(groupedResults).length === 0) {
+      groupedResults["Others - Miscellaneous"] = [query];
+    }
 
-    setMessages(newMessages);
-    setInput("");
+    setResults(groupedResults);
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "800px", margin: "auto" }}>
-      <h1>Complaint Chatbot</h1>
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h1>Complaint Type Search</h1>
 
-      <div style={{
-        border: "1px solid #ccc",
-        padding: "10px",
-        height: "400px",
-        overflowY: "auto",
-        background: "#f9f9f9",
-        borderRadius: "5px"
-      }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ textAlign: msg.sender === "user" ? "right" : "left", margin: "10px 0" }}>
-            <span style={{
-              background: msg.sender === "user" ? "#0070f3" : "#e0e0e0",
-              color: msg.sender === "user" ? "#fff" : "#000",
-              padding: "8px 12px",
-              borderRadius: "15px",
-              display: "inline-block"
-            }}>
-              {msg.text}
-            </span>
-          </div>
-        ))}
-      </div>
+      {/* Input Box */}
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type keyword..."
+        style={{ padding: "8px", width: "300px" }}
+      />
+      <button
+        onClick={handleSearch}
+        style={{
+          padding: "8px 12px",
+          marginLeft: "10px",
+          background: "#0070f3",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Search
+      </button>
 
-      <div style={{ marginTop: "10px", display: "flex" }}>
-        <input
-          type="text"
-          placeholder="Type a message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          style={{ flex: 1, padding: "8px" }}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-        />
-        <button
-          onClick={handleSend}
-          style={{
-            padding: "8px 12px",
-            marginLeft: "5px",
-            background: "#0070f3",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer"
-          }}
-        >
-          Send
-        </button>
+      {/* Search Results */}
+      <div style={{ marginTop: "20px" }}>
+        {Object.keys(results).length > 0 ? (
+          Object.entries(results).map(([type, keywords]) => (
+            <div key={type} style={{ marginBottom: "20px" }}>
+              <h3 style={{ color: "blue" }}>{type}</h3>
+              <ul>
+                {keywords.map((kw, i) => (
+                  <li key={i}>{kw}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        ) : (
+          <p style={{ marginTop: "20px" }}>No results found.</p>
+        )}
       </div>
     </div>
   );

@@ -1,81 +1,80 @@
 import { useState } from "react";
-import { complaintMap } from "../data/complaintMap"; // keywords mapped to complaint type
+import { complaintMap } from "../data/complaintMap"; // ✅ yahan se mapping import ho rahi hai
 
 export default function Home() {
   const [input, setInput] = useState("");
-  const [results, setResults] = useState({});
+  const [results, setResults] = useState([]);
 
+  // ✅ Ye wahi handleSearch function jo aapne bheja hai
   const handleSearch = () => {
     const query = input.toLowerCase().trim();
     if (!query) {
-      setResults({});
+      setResults([]);
       return;
     }
 
-    const groupedResults = {};
+    const matches = [];
 
-    // Loop through all keywords in complaintMap
+    // complaintMap ke saare keywords check karo
     for (const keyword in complaintMap) {
       if (keyword.includes(query)) { // ✅ partial match allowed
-        const type = complaintMap[keyword];
-        if (!groupedResults[type]) {
-          groupedResults[type] = [];
-        }
-        groupedResults[type].push(keyword);
+        matches.push({
+          keyword: keyword,
+          type: complaintMap[keyword]
+        });
       }
     }
 
-    // If nothing matches
-    if (Object.keys(groupedResults).length === 0) {
-      groupedResults["Others - Miscellaneous"] = [query];
+    if (matches.length === 0) {
+      // koi match nahi mila
+      setResults([{ keyword: query, type: "Others - Miscellaneous" }]);
+    } else {
+      setResults(matches);
     }
-
-    setResults(groupedResults);
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h1>Complaint Type Search</h1>
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+      <h1>Complaint Search</h1>
 
-      {/* Input Box */}
+      {/* Search Box */}
       <input
         type="text"
+        placeholder="Type any keyword..."
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Type keyword..."
         style={{ padding: "8px", width: "300px" }}
       />
+
       <button
         onClick={handleSearch}
-        style={{
-          padding: "8px 12px",
-          marginLeft: "10px",
-          background: "#0070f3",
-          color: "#fff",
-          border: "none",
-          cursor: "pointer",
-        }}
+        style={{ marginLeft: "10px", padding: "8px" }}
       >
         Search
       </button>
 
-      {/* Search Results */}
-      <div style={{ marginTop: "20px" }}>
-        {Object.keys(results).length > 0 ? (
-          Object.entries(results).map(([type, keywords]) => (
-            <div key={type} style={{ marginBottom: "20px" }}>
-              <h3 style={{ color: "blue" }}>{type}</h3>
-              <ul>
-                {keywords.map((kw, i) => (
-                  <li key={i}>{kw}</li>
-                ))}
-              </ul>
-            </div>
-          ))
-        ) : (
-          <p style={{ marginTop: "20px" }}>No results found.</p>
-        )}
-      </div>
+      {/* Display Results */}
+      {results.length > 0 && (
+        <div style={{ marginTop: "20px" }}>
+          <h3>Matches:</h3>
+          <table border="1" cellPadding="8">
+            <thead>
+              <tr>
+                <th>Issue Keyword</th>
+                <th>Complaint Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((res, index) => (
+                <tr key={index}>
+                  <td>{res.keyword}</td>
+                  <td>{res.type}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
